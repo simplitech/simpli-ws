@@ -1,0 +1,2 @@
+include ':simpli-ws', ':simpli-tools'
+project(':simpli-tools').projectDir = new File('../simpli-tools')
