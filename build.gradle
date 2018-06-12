@@ -1,4 +1,4 @@
-group 'com.simpli.ws'
+group 'br.com.simpli.ws'
 version '1.0.0'
 
 apply plugin: 'maven-publish'

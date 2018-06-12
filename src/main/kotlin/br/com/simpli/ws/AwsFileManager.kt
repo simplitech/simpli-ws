@@ -1,4 +1,4 @@
-package com.simpli.ws
+package br.com.simpli.ws
 
 import com.amazonaws.HttpMethod
 import com.amazonaws.auth.PropertiesCredentials

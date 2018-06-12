@@ -1,11 +1,11 @@
-package com.simpli.ws
+package br.com.simpli.ws
 
 import com.amazonaws.auth.PropertiesCredentials
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.sns.AmazonSNSClient
 import com.amazonaws.services.sns.model.PublishRequest
-import com.simpli.tools.Validator
+import br.com.simpli.tools.Validator
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.Logger

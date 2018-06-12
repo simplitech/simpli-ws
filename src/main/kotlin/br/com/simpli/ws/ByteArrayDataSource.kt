@@ -1,4 +1,4 @@
-package com.simpli.ws
+package br.com.simpli.ws
 
 import java.io.*
 import javax.activation.*
