@@ -1,5 +1,5 @@
 group 'br.com.simpli'
-version '1.0.0'
+version '1.1.0'
 
 apply plugin: 'maven'
 apply plugin: 'kotlin'
@@ -33,6 +33,8 @@ dependencies {
     compile group: 'org.freemarker', name: 'freemarker', version: '2.3.28'
     compile group: 'log4j', name: 'log4j', version: '1.2.17'
     compile "br.com.simpli:simpli-tools:1.0.0"
+    compile 'com.github.fernandospr:javapns-jdk16:2.4.0'
+    compile 'com.google.code.gson:gson:2.2.4'
 }
 
 compileKotlin {
@@ -86,6 +88,11 @@ uploadArchives {
                         id 'joao.lippi'
                         name 'Joao Pedro Lippi'
                         email 'joao.lippi@simpli.com.br'
+                    }
+                    developer {
+                        id 'melanke'
+                        name 'Gil Lopes Bueno'
+                        email 'gil.bueno@simpli.com.br'
                     }
                 }
                 scm {
