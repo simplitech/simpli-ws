@@ -3,3 +3,5 @@
 build
 simpli-ws.iml
 out
+gradle.properties
+key.gpg
