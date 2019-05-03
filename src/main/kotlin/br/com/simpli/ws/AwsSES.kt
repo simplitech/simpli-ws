@@ -3,7 +3,9 @@ package br.com.simpli.ws
 import com.amazonaws.auth.PropertiesCredentials
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailService
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClient
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import com.amazonaws.services.simpleemail.model.SendEmailRequest
 import java.io.IOException
 import java.util.logging.Level
@@ -15,18 +17,22 @@ import java.util.logging.Logger
  */
 class AwsSES {
     private var credentials: PropertiesCredentials? = null
-    private var sesClient: AmazonSimpleEmailServiceClient? = null
+    private var sesClient: AmazonSimpleEmailService? = null
 
     constructor() {
         try {
-            val properties = AwsFileManager::class.java!!.getResourceAsStream("/AwsCredentials.properties")
+            sesClient = AmazonSimpleEmailServiceClientBuilder.standard().build()
+        } catch(e: Exception) {
+            try {
+            val properties = AwsFileManager::class.java.getResourceAsStream("/AwsCredentials.properties")
+
             credentials = PropertiesCredentials(properties)
             sesClient = AmazonSimpleEmailServiceClient(credentials)
             sesClient!!.setRegion(Region.getRegion(Regions.US_WEST_2))
-        } catch (ex: IOException) {
-            Logger.getLogger(AwsSNS::class.java!!.getName()).log(Level.SEVERE, null, ex)
+            } catch (ex: IOException) {
+                Logger.getLogger(AwsSNS::class.java.getName()).log(Level.SEVERE, null, ex)
+            }
         }
-
     }
 
     constructor(credentialsFileName: String) {

@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.services.ec2.util.S3UploadPolicy
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest
 import java.io.ByteArrayInputStream
@@ -29,16 +30,20 @@ class AwsFileManager @JvmOverloads constructor(bucketName: String, endpoint: Str
     private var s3Client: AmazonS3? = null
 
     init {
-        try {
-            this.bucketName = bucketName
-            this.endpoint = endpoint
-            properties = AwsFileManager::class.java.getResourceAsStream("/AwsCredentials.properties")
-            credentials = PropertiesCredentials(properties)
-            s3Client = AmazonS3Client(credentials)
-        } catch (ex: IOException) {
-            Logger.getLogger(AwsFileManager::class.java.name).log(Level.SEVERE, null, ex)
-        }
+        this.bucketName = bucketName
+        this.endpoint = endpoint
 
+        try {
+            s3Client = AmazonS3ClientBuilder.standard().build()
+        } catch(e: Exception) {
+            try {
+                properties = AwsFileManager::class.java.getResourceAsStream("/AwsCredentials.properties")
+                credentials = PropertiesCredentials(properties)
+                s3Client = AmazonS3Client(credentials)
+            } catch (ex: IOException) {
+                Logger.getLogger(AwsFileManager::class.java.name).log(Level.SEVERE, null, ex)
+            }
+        }
     }
 
     fun initiateMultipartUpload(folder: String, filename: String): String {
