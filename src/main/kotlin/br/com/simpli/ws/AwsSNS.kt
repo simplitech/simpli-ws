@@ -48,7 +48,10 @@ class AwsSNS {
 
     }
 
-    fun enviarSMS(destinatario: String, mensagem: String) {
+    @Deprecated
+    fun enviarSMS(destinatario: String, mensagem: String) = sendSMS(destinatario, mensagem)
+
+    fun sendSMS(destinatario: String, mensagem: String) {
         if (!Validator.isValidPhoneNumber(destinatario)) {
             return
         }
