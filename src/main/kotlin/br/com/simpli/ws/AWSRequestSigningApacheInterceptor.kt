@@ -10,7 +10,7 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package br.com.simpli.ws
+package br.com.sharity.temp
 
 import com.amazonaws.DefaultRequest
 import com.amazonaws.auth.AWSCredentials
@@ -49,19 +49,19 @@ class AWSRequestSigningApacheInterceptor
  * @param awsCredentials source of AWS credentials for signing
  */
 (
-    /**
-     * The service that we're connecting to. Technically not necessary.
-     * Could be used by a future Signer, though.
-     */
-    private val service: String,
-    /**
-     * The particular signer implementation.
-     */
-    private val signer: Signer,
-    /**
-     * The source of AWS credentials for signing.
-     */
-    private val awsCredentials: AWSCredentials) : HttpRequestInterceptor {
+        /**
+         * The service that we're connecting to. Technically not necessary.
+         * Could be used by a future Signer, though.
+         */
+        private val service: String,
+        /**
+         * The particular signer implementation.
+         */
+        private val signer: Signer,
+        /**
+         * The source of AWS credentials for signing.
+         */
+        private val awsCredentials: AWSCredentials) : HttpRequestInterceptor {
 
     /**
      * {@inheritDoc}
@@ -117,10 +117,10 @@ class AWSRequestSigningApacheInterceptor
      * @param params list of HTTP query params as NameValuePairs
      * @return a multimap of HTTP query params
      */
-    private fun nvpToMapParams(params: List<NameValuePair>): Map<String, List<String>> {
-        val parameterMap = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER)
+    private fun nvpToMapParams(params: MutableList<NameValuePair>): Map<String, MutableList<String>> {
+        val parameterMap = TreeMap<String, MutableList<String>>(String.CASE_INSENSITIVE_ORDER)
         for (nvp in params) {
-            val argsList = ArrayList(parameterMap.computeIfAbsent(nvp.name) { k -> ArrayList() })
+            val argsList = parameterMap.computeIfAbsent(nvp.name) { ArrayList() }
             argsList.add(nvp.value)
         }
         return parameterMap
@@ -146,7 +146,7 @@ class AWSRequestSigningApacheInterceptor
      */
     private fun skipHeader(header: Header): Boolean {
         return ("content-length".equals(header.name, ignoreCase = true) && "0" == header.value // Strip Content-Length: 0
-            || "host".equals(header.name, ignoreCase = true)) // Host comes from endpoint
+                || "host".equals(header.name, ignoreCase = true)) // Host comes from endpoint
     }
 
     /**
