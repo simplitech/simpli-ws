@@ -10,7 +10,7 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package br.com.sharity.temp
+package br.com.simpli.ws
 
 import com.amazonaws.DefaultRequest
 import com.amazonaws.auth.AWSCredentials

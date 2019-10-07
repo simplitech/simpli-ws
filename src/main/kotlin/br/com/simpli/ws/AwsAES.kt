@@ -1,4 +1,4 @@
-package br.com.sharity.temp
+package br.com.simpli.ws
 
 import com.amazonaws.auth.*
 import com.amazonaws.regions.Regions
@@ -29,20 +29,20 @@ class AwsAES : RestHighLevelClient {
 
     @JvmOverloads
     constructor(endpoint: String, region: Regions = Regions.US_EAST_1, credentialsFileName: String = "/AwsCredentials.properties"): super(
-            RestClient.builder(HttpHost(URI(endpoint).host, URI(endpoint).port, URI(endpoint).scheme))
-                    .setHttpClientConfigCallback {
-                        it.addInterceptorLast(
-                                AWSRequestSigningApacheInterceptor("es", AWS4Signer().also {
-                                    it.serviceName = "es"
-                                    it.regionName = region.getName()
-                                }, try {
-                                    val properties = getResourceAsStream(credentialsFileName)
-                                    AWSStaticCredentialsProvider(PropertiesCredentials(properties)).credentials
-                                } catch (e: Exception) {
-                                    DefaultAWSCredentialsProviderChain().credentials
-                                })
-                        )
-                    }
+        RestClient.builder(HttpHost(URI(endpoint).host, URI(endpoint).port, URI(endpoint).scheme))
+            .setHttpClientConfigCallback {
+                it.addInterceptorLast(
+                    AWSRequestSigningApacheInterceptor("es", AWS4Signer().also {
+                        it.serviceName = "es"
+                        it.regionName = region.getName()
+                    }, try {
+                        val properties = getResourceAsStream(credentialsFileName)
+                        AWSStaticCredentialsProvider(PropertiesCredentials(properties)).credentials
+                    } catch (e: Exception) {
+                        DefaultAWSCredentialsProviderChain().credentials
+                    })
+                )
+            }
     )
 
     fun <T: Any> index(index: String, id: String, obj: T) {
@@ -59,39 +59,46 @@ class AwsAES : RestHighLevelClient {
 
     fun <T: Any> bulkIndex(index: String, map: Map<String, T>) {
         this.bulk(
-                BulkRequest().apply {
-                    map.forEach { add(IndexRequest(index).id(it.key).source(it.value.toJSON(), XContentType.JSON)) }
-                } ,RequestOptions.DEFAULT
+            BulkRequest().apply {
+                map.forEach { add(IndexRequest(index).id(it.key).source(it.value.toJSON(), XContentType.JSON)) }
+            } ,RequestOptions.DEFAULT
         )
     }
 
     fun <T: Any> bulkUpdate(index: String, map: Map<String, T>) {
         this.bulk(
-                BulkRequest().apply {
-                    map.forEach { add(UpdateRequest(index, it.key).doc(it.value.toJSON(), XContentType.JSON)) }
-                } ,RequestOptions.DEFAULT
+            BulkRequest().apply {
+                map.forEach { add(UpdateRequest(index, it.key).doc(it.value.toJSON(), XContentType.JSON)) }
+            } ,RequestOptions.DEFAULT
         )
     }
 
     fun bulkDelete(index: String, ids: List<String>) {
         this.bulk(
-                BulkRequest().apply {
-                    ids.forEach { add(DeleteRequest(index, it)) }
-                } ,RequestOptions.DEFAULT
+            BulkRequest().apply {
+                ids.forEach { add(DeleteRequest(index, it)) }
+            } ,RequestOptions.DEFAULT
         )
     }
 
-    inline fun <reified T: Any> search(index: String, query: QueryBuilder, limit: Int = 10, page: Int = 0): List<T> {
+    inline fun <reified T: Any> search(
+            index: String,
+            query: QueryBuilder,
+            sort: SortBuilder<*> = SortBuilders.fieldSort("_id"),
+            limit: Int = 10,
+            page: Int = 0
+    ): List<T> {
         return this.search(
-                SearchRequest(index)
-                        .source(
-                                SearchSourceBuilder()
-                                        .query(query)
-                                        .from(limit * page)
-                                        .size(limit)
-                        )
-                , RequestOptions.DEFAULT)
-                .hits.map {
+            SearchRequest(index)
+                .source(
+                    SearchSourceBuilder()
+                        .query(query)
+                        .from(limit * page)
+                        .size(limit)
+                        .sort(sort)
+                )
+            , RequestOptions.DEFAULT)
+            .hits.map {
             GsonBuilder().create().fromJson(it.sourceAsString, T::class.java)
         }
     }
