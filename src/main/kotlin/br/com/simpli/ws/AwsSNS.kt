@@ -48,17 +48,17 @@ class AwsSNS {
 
     }
 
-    @Deprecated
+    @Deprecated("Method in portuguese has been deprecated.", ReplaceWith("sendSMS(recipient, message)"))
     fun enviarSMS(destinatario: String, mensagem: String) = sendSMS(destinatario, mensagem)
 
-    fun sendSMS(destinatario: String, mensagem: String) {
-        if (!Validator.isValidPhoneNumber(destinatario)) {
+    fun sendSMS(recipient: String, message: String) {
+        if (!Validator.isValidPhoneNumber(recipient)) {
             return
         }
 
         val publishRequest = PublishRequest()
-                .withMessage(mensagem)
-                .withPhoneNumber(destinatario)
+                .withMessage(message)
+                .withPhoneNumber(recipient)
         snsClient!!.publish(publishRequest)
     }
 
