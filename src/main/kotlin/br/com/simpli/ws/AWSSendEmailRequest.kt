@@ -1,6 +1,5 @@
 package br.com.simpli.ws
 
-import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.simpleemail.model.*
 import freemarker.template.Configuration
@@ -14,7 +13,8 @@ import org.apache.log4j.BasicConfigurator
  *
  * @author ricardoprado
  */
-open class AWSSendEmailRequest {
+
+open class AWSSendEmailRequest @JvmOverloads constructor(private val region: Regions = Regions.US_WEST_2) {
     protected var from = ""
     protected var name = from
     protected var to = ""
@@ -25,15 +25,7 @@ open class AWSSendEmailRequest {
     protected var body: String = ""
     protected var attachment = ""
     protected var nameAttachment = ""
-    private var region: Regions? = null
 
-    constructor(region: Regions) {
-        this.region = region
-    }
-
-    constructor() {
-        this.region = Regions.US_WEST_2
-    }
 
     fun send() {
         // Construct an object to contain the recipient address.
@@ -49,9 +41,7 @@ open class AWSSendEmailRequest {
 
         // Assemble the email.
         val request = SendEmailRequest().withSource(from).withDestination(destination).withMessage(message)
-        val ses = AwsSES()
-        ses.setRegion(Region.getRegion(region!!))
-        ses.sendEmail(request)
+        AwsSES(region).sendEmail(request)
     }
 
     /**
@@ -81,16 +71,19 @@ open class AWSSendEmailRequest {
          * @return
          */
         fun getTemplateConfigInstance(forClassLoader: Class<*>): Configuration {
-            if (templateConfig == null) {
+
+            return templateConfig ?: run{
                 BasicConfigurator.configure()
-                templateConfig = Configuration(Configuration.VERSION_2_3_22)
-                templateConfig!!.setClassForTemplateLoading(forClassLoader, "/mail-templates")
-                templateConfig!!.setDefaultEncoding("UTF-8")
-                templateConfig!!.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER)
-                templateConfig!!.setLocalizedLookup(false)
+                return Configuration(Configuration.VERSION_2_3_22).apply {
+                    setClassForTemplateLoading(forClassLoader, "/mail-templates")
+                    defaultEncoding = "UTF-8"
+                    templateExceptionHandler = TemplateExceptionHandler.RETHROW_HANDLER
+                    localizedLookup = false
+
+                    templateConfig = this
+                }
             }
 
-            return templateConfig as Configuration
         }
     }
 
