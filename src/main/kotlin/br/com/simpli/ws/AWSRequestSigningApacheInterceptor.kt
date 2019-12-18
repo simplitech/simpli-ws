@@ -39,7 +39,7 @@ import org.apache.http.protocol.HttpCoreContext.HTTP_TARGET_HOST
  * An [HttpRequestInterceptor] that signs requests using any AWS [Signer]
  * and [AWSCredentialsProvider].
  */
-class AWSRequestSigningApacheInterceptor
+internal class AWSRequestSigningApacheInterceptor
 /**
  *
  * @param service service that we're connecting to
