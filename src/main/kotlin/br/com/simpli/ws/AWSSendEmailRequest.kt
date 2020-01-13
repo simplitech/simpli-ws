@@ -7,7 +7,6 @@ import freemarker.template.TemplateExceptionHandler
 import java.io.StringWriter
 import java.util.logging.Level
 import java.util.logging.Logger
-import org.apache.log4j.BasicConfigurator
 
 /**
  *
@@ -73,7 +72,6 @@ open class AWSSendEmailRequest @JvmOverloads constructor(private val region: Reg
         fun getTemplateConfigInstance(forClassLoader: Class<*>): Configuration {
 
             return templateConfig ?: run{
-                BasicConfigurator.configure()
                 return Configuration(Configuration.VERSION_2_3_22).apply {
                     setClassForTemplateLoading(forClassLoader, "/mail-templates")
                     defaultEncoding = "UTF-8"
@@ -83,8 +81,6 @@ open class AWSSendEmailRequest @JvmOverloads constructor(private val region: Reg
                     templateConfig = this
                 }
             }
-
         }
     }
-
 }
