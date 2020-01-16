@@ -1,3 +1,5 @@
+package br.com.simpli.ws
+
 import com.amazonaws.util.ClassLoaderHelper
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.gson.Gson
