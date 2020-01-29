@@ -33,7 +33,7 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
     private val projectId = getProjectId()
 
     private val endpointGCM = "https://android.googleapis.com/gcm/send"
-    private val endpointFMCLegacy = "https://fcm.googleapis.comfcm/send"
+    private val endpointFMCLegacy = "https://fcm.googleapis.com/fcm/send"
     private val endpointFCM = "https://fcm.googleapis.com/v1/projects/$projectId/messages:send"
 
     private val scope = "https://www.googleapis.com/auth/firebase.messaging"
