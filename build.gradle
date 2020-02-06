@@ -1,11 +1,3 @@
-group 'br.com.simpli'
-version '1.3.1'
-
-apply plugin: 'maven'
-apply plugin: 'kotlin'
-apply plugin: 'org.jetbrains.dokka'
-apply plugin: 'signing'
-
 buildscript {
     ext.kotlin_version = '1.3.50'
 
@@ -18,6 +10,18 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.9"
     }
 }
+
+plugins {
+    id 'maven-publish'
+}
+
+group 'br.com.simpli'
+version '1.9.9'
+
+apply plugin: 'maven'
+apply plugin: 'kotlin'
+apply plugin: 'org.jetbrains.dokka'
+apply plugin: 'signing'
 
 repositories {
     mavenCentral()
@@ -41,6 +45,18 @@ dependencies {
     api 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.1.0'
     implementation 'com.google.auth:google-auth-library-oauth2-http:0.18.0'
     api 'com.turo:pushy:0.13.10'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'br.com.simpli'
+            artifactId = 'simpli-ws'
+            version = '1.9.9'
+
+            from components.java
+        }
+    }
 }
 
 compileKotlin {

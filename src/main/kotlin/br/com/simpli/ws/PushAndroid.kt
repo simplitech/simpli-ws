@@ -53,19 +53,13 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
         return send(title, content, data, pushTokens.toList())
     }
 
-    fun send(title: String, content: String, data: Map<String, Any>, pushTokens: List<String>): BatchResponse {
-        return send(title, content, data, pushTokens, true)
-    }
-
-    fun send(title: String, content: String, data: Map<String, Any>, pushTokens: List<String>, encode: Boolean): BatchResponse {
+    @JvmOverloads
+    fun send(title: String, content: String, data: Map<String, Any>? = null, pushTokens: List<String>): BatchResponse {
         if (!firebase || legacy) {
             throw UnsupportedOperationException("Only works with FCM HTTP v1 API")
         }
 
-        val encTitle = if (encode) URLEncoder.encode(title, "UTF-8") else title
-        val encContent = if (encode) URLEncoder.encode(content, "UTF-8") else content
-
-        return sendFirebase(encTitle, encContent, data, endpointFCM, pushTokens)
+        return sendFirebase(title, content, data, endpointFCM, pushTokens)
     }
 
     @Throws(Exception::class)
@@ -101,7 +95,7 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
         }
     }
 
-    private fun sendFirebase(title: String, text: String, data: Map<String, Any>, url: String, pushTokens: List<String>) : BatchResponse {
+    private fun sendFirebase(title: String, text: String, data: Map<String, Any>? = null, url: String, pushTokens: List<String>) : BatchResponse {
 
         // New Firebase API doesn't support multiple registration IDs in the same request anymore
         // unless it's a multipart/mixed POST request with a limit of 100 tokens
@@ -165,7 +159,7 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
         return payload(null, null, mapOf("message" to content), pushToken)
     }
 
-    private fun payload(title: String? = null, content: String? = null, data: Map<String, Any>, pushToken: String? = null): Map<String, Any> {
+    private fun payload(title: String? = null, content: String? = null, data: Map<String, Any>? = null, pushToken: String? = null): Map<String, Any> {
         return HashMap<String, Any>().apply {
             this["message"] = HashMap<String, Any>().apply {
 
@@ -176,7 +170,8 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
                     }
                 }
 
-                this["data"] = data
+                data?.also { this["data"] = it }
+
                 pushToken?.also {
                     this["token"] = it
                 }
