@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.apache.log4j.Logger
 import java.io.IOException
 import java.lang.StringBuilder
+import java.lang.UnsupportedOperationException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
@@ -48,6 +49,25 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
         return send(text, pushTokens, true)
     }
 
+    fun send(title: String, content: String, data: Map<String, Any>, vararg pushTokens: String): BatchResponse {
+        return send(title, content, data, pushTokens.toList())
+    }
+
+    fun send(title: String, content: String, data: Map<String, Any>, pushTokens: List<String>): BatchResponse {
+        return send(title, content, data, pushTokens, true)
+    }
+
+    fun send(title: String, content: String, data: Map<String, Any>, pushTokens: List<String>, encode: Boolean): BatchResponse {
+        if (!firebase || legacy) {
+            throw UnsupportedOperationException("Only works with FCM HTTP v1 API")
+        }
+
+        val encTitle = if (encode) URLEncoder.encode(title, "UTF-8") else title
+        val encContent = if (encode) URLEncoder.encode(content, "UTF-8") else content
+
+        return sendFirebase(encTitle, encContent, data, endpointFCM, pushTokens)
+    }
+
     @Throws(Exception::class)
     fun send(text: String, pushTokens: List<String>, encode: Boolean): BatchResponse {
 
@@ -72,6 +92,26 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
             pushTokens.map {
                 GlobalScope.async {
                     Response(it, post(url,  mapper.toJson(payload(content, it))))
+                }
+            }.awaitAll()
+        }.run {
+            BatchResponse(this).apply {
+                log()
+            }
+        }
+    }
+
+    private fun sendFirebase(title: String, text: String, data: Map<String, Any>, url: String, pushTokens: List<String>) : BatchResponse {
+
+        // New Firebase API doesn't support multiple registration IDs in the same request anymore
+        // unless it's a multipart/mixed POST request with a limit of 100 tokens
+        val logPayload = mapper.toJson(payload(title, text, data))
+        Logger.getLogger(PushAndroid::class.java).debug("Sending push: $logPayload")
+
+        return runBlocking {
+            pushTokens.map {
+                GlobalScope.async {
+                    Response(it, post(url,  mapper.toJson(payload(title, text, data, it))))
                 }
             }.awaitAll()
         }.run {
@@ -122,11 +162,21 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
     }
 
     private fun payload(content: String, pushToken: String? = null): Map<String, Any> {
+        return payload(null, null, mapOf("message" to content), pushToken)
+    }
+
+    private fun payload(title: String? = null, content: String? = null, data: Map<String, Any>, pushToken: String? = null): Map<String, Any> {
         return HashMap<String, Any>().apply {
             this["message"] = HashMap<String, Any>().apply {
-                this["data"] = HashMap<String, String>().apply {
-                    this["message"] = content
+
+                if (!title.isNullOrEmpty() || !content.isNullOrEmpty()) {
+                    this["notification"] = HashMap<String, Any>().apply {
+                        title?.also { this["title"] = it }
+                        content?.also { this["body"] = it }
+                    }
                 }
+
+                this["data"] = data
                 pushToken?.also {
                     this["token"] = it
                 }
