@@ -1,6 +1,7 @@
 package br.com.simpli.ws
 
 import br.com.simpli.model.PageCollection
+import br.com.simpli.tools.ResourceLoader
 import com.amazonaws.auth.AWS4Signer
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
@@ -35,9 +36,25 @@ import org.elasticsearch.search.sort.SortBuilders
 class AwsAES : RestHighLevelClient {
 
     companion object {
-        fun getMapping(file: String): String {
-            val stream = InputStreamReader(getResourceAsStream(file))
-            return stream.readText().also { stream.close() }
+        fun getMapping(file: String): String? {
+            return getResource("/elastic/mapping", file)
+        }
+
+        fun getFunction(file: String): String? {
+            return getResource("/elastic/function", file)
+        }
+
+        private fun getResource(prefix: String, file: String): String? {
+            val correctedFile = if (!file.startsWith('/')) {
+                "/$file"
+            } else {
+                file
+            }
+            return if (correctedFile.startsWith(prefix)) {
+                ResourceLoader.getString(correctedFile)
+            } else {
+                ResourceLoader.getString("$prefix$correctedFile") ?: ResourceLoader.getString(correctedFile)
+            }
         }
     }
 
