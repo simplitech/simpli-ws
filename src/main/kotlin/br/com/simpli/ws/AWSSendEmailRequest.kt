@@ -24,6 +24,8 @@ open class AWSSendEmailRequest @JvmOverloads constructor(private val region: Reg
     protected var body: String = ""
     protected var attachment = ""
     protected var nameAttachment = ""
+    protected var mailGroup: String? = null
+    protected val tags = HashMap<String, String>()
 
 
     fun send() {
@@ -38,8 +40,15 @@ open class AWSSendEmailRequest @JvmOverloads constructor(private val region: Reg
         // Create a message with the specified subject and body.
         val message = Message().withSubject(subjectParam).withBody(bodyParam)
 
+        val tagList = tags.map { MessageTag().withName(it.key).withValue(it.value) }
+
         // Assemble the email.
-        val request = SendEmailRequest().withSource(from).withDestination(destination).withMessage(message)
+        val request = SendEmailRequest()
+            .withSource(from)
+            .withDestination(destination)
+            .withMessage(message)
+            .withConfigurationSetName(mailGroup)
+            .withTags(tagList)
         AwsSES(region).sendEmail(request)
     }
 
