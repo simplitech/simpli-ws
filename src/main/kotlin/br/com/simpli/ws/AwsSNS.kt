@@ -1,15 +1,12 @@
 package br.com.simpli.ws
 
-import com.amazonaws.auth.PropertiesCredentials
-import com.amazonaws.regions.Regions
-import com.amazonaws.services.sns.model.PublishRequest
 import br.com.simpli.tools.Validator
-import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.auth.AWSStaticCredentialsProvider
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import br.com.simpli.util.resolveCredentials
+import br.com.simpli.util.resolveRegion
+import com.amazonaws.regions.Regions
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.AmazonSNSClientBuilder
-import com.amazonaws.util.ClassLoaderHelper.getResourceAsStream
+import com.amazonaws.services.sns.model.PublishRequest
 
 /**
  *
@@ -17,25 +14,28 @@ import com.amazonaws.util.ClassLoaderHelper.getResourceAsStream
  */
 class AwsSNS {
 
-    private val provider: AWSCredentialsProvider
-    private var snsClient: AmazonSNS
+    private val snsClient: AmazonSNS
 
-    constructor(region: String, credentialsFileName: String)
-            : this(Regions.fromName(region.toLowerCase().replace('_', '-')), credentialsFileName)
+    constructor(region: String, credentialsFileName: String) :
+            this(null, region, credentialsFileName)
 
-    @JvmOverloads
-    constructor(region: Regions = Regions.US_EAST_1, credentialsFileName: String) {
+    constructor(region: Regions, credentialsFileName: String) :
+            this(region, null, credentialsFileName)
 
-        provider = try {
-            AWSStaticCredentialsProvider(PropertiesCredentials(getResourceAsStream(credentialsFileName)))
-        } catch (e: Exception) {
-            DefaultAWSCredentialsProviderChain()
-        }
+    constructor(region: String) :
+            this(null, region, null)
 
+    constructor(region: Regions) :
+            this(region, null, null)
+
+    constructor() :
+            this(null, null, null)
+
+    private constructor(regionEnum: Regions?, regionString: String?, credentialsFileName: String?) {
         snsClient = AmazonSNSClientBuilder.standard()
-                .withRegion(region)
-                .withCredentials(provider)
-                .build()
+            .withRegion(resolveRegion(regionEnum, regionString))
+            .withCredentials(resolveCredentials(credentialsFileName))
+            .build()
     }
 
     @Deprecated("Method in portuguese has been deprecated.", ReplaceWith("sendSMS(recipient, message)"))

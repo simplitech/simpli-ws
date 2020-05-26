@@ -1,19 +1,17 @@
 package br.com.simpli.ws
 
+import br.com.simpli.util.resolveCredentials
+import br.com.simpli.util.resolveRegion
 import com.amazonaws.HttpMethod
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.auth.AWSStaticCredentialsProvider
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.auth.PropertiesCredentials
 import com.amazonaws.regions.Regions
-import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.ObjectMetadata
-import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.services.ec2.util.S3UploadPolicy
+import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest
-import com.amazonaws.util.ClassLoaderHelper
+import com.amazonaws.services.s3.model.ObjectMetadata
+import com.amazonaws.services.s3.model.PutObjectRequest
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.time.LocalDateTime
@@ -31,19 +29,26 @@ class AwsFileManager {
     private val region: Regions
     private val expireInHours: Long = 24
 
-    constructor(bucketName: String, region: String, credentialsFileName: String = "/AwsCredentials.properties") :
-            this(bucketName, Regions.fromName(region.toLowerCase().replace('_', '-')), credentialsFileName)
+    constructor(bucketName: String, region: String, credentialsFileName: String) :
+            this(bucketName, null, region, credentialsFileName)
 
-    @JvmOverloads
-    constructor(bucketName: String, region: Regions = Regions.US_EAST_1, credentialsFileName: String = "/AwsCredentials.properties") {
+    constructor(bucketName: String, region: Regions, credentialsFileName: String) :
+            this(bucketName, region, null, credentialsFileName)
+
+    constructor(bucketName: String, region: String) :
+            this(bucketName, null, region, null)
+
+    constructor(bucketName: String, region: Regions) :
+            this(bucketName, region, null, null)
+
+    constructor(bucketName: String):
+            this(bucketName, null, null, null)
+
+    private constructor(bucketName: String, regionEnum: Regions?, regionString: String?, credentialsFileName: String?) {
         this.bucketName = bucketName
-        this.region = region
+        this.region = resolveRegion(regionEnum, regionString)
 
-        provider = try {
-            AWSStaticCredentialsProvider(PropertiesCredentials(ClassLoaderHelper.getResourceAsStream(credentialsFileName)))
-        } catch (e: Exception) {
-            DefaultAWSCredentialsProviderChain()
-        }
+        provider = resolveCredentials(credentialsFileName)
 
         client = AmazonS3ClientBuilder
                 .standard()

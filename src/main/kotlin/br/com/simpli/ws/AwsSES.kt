@@ -1,15 +1,12 @@
 package br.com.simpli.ws
 
+import br.com.simpli.util.resolveCredentials
+import br.com.simpli.util.resolveRegion
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.auth.AWSStaticCredentialsProvider
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.auth.PropertiesCredentials
-import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import com.amazonaws.services.simpleemail.model.SendEmailRequest
-import com.amazonaws.util.ClassLoaderHelper.getResourceAsStream
 
 /**
  *
@@ -20,33 +17,43 @@ class AwsSES  {
     private val provider: AWSCredentialsProvider
     private var sesClient: AmazonSimpleEmailService
 
-    constructor(region: String, credentialsFileName: String = "/AwsCredentials.properties") :
-            this(Regions.fromName(region.toLowerCase().replace('_', '-')), credentialsFileName)
+    constructor(region: String, credentialsFileName: String) :
+            this(null, region, credentialsFileName)
 
-    @JvmOverloads
-    constructor(region: Regions = Regions.US_EAST_1, credentialsFileName: String = "/AwsCredentials.properties") {
+    constructor(region: Regions, credentialsFileName: String):
+            this(region, null, credentialsFileName)
 
-        provider = try {
-            AWSStaticCredentialsProvider(PropertiesCredentials(getResourceAsStream(credentialsFileName)))
-        } catch (e: Exception) {
-            DefaultAWSCredentialsProviderChain()
-        }
+    constructor(region: String) :
+            this(null, region, null)
 
-        sesClient = AmazonSimpleEmailServiceClientBuilder.standard()
-            .withRegion(region)
-            .withCredentials(provider)
-            .build()
+    constructor(region: Regions) :
+            this(region, null, null)
+
+    constructor() :
+            this(null, null, null)
+
+    private constructor(regionEnum: Regions?, regionString: String?, credentialsFileName: String?) {
+        provider = resolveCredentials(credentialsFileName)
+        sesClient = buildClient(resolveRegion(regionEnum, regionString).getName())
     }
 
 
-    fun setRegion(region: Region) {
-        sesClient = AmazonSimpleEmailServiceClientBuilder.standard()
-            .withRegion(region.name)
-            .withCredentials(provider)
-            .build()
+    fun setRegion(region: Regions) {
+        setRegion(region.getName())
+    }
+
+    fun setRegion(region: String) {
+        sesClient = buildClient(region)
     }
 
     fun sendEmail(request: SendEmailRequest) {
         sesClient.sendEmail(request)
+    }
+
+    private fun buildClient(region: String): AmazonSimpleEmailService {
+        return AmazonSimpleEmailServiceClientBuilder.standard()
+            .withRegion(region)
+            .withCredentials(provider)
+            .build()
     }
 }

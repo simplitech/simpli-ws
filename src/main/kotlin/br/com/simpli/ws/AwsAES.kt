@@ -2,15 +2,12 @@ package br.com.simpli.ws
 
 import br.com.simpli.model.PageCollection
 import br.com.simpli.tools.ResourceLoader
+import br.com.simpli.util.AwsRequestSigningApacheInterceptor
+import br.com.simpli.util.resolveCredentials
+import br.com.simpli.util.resolveRegion
 import com.amazonaws.auth.AWS4Signer
-import com.amazonaws.auth.AWSStaticCredentialsProvider
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.auth.PropertiesCredentials
 import com.amazonaws.regions.Regions
-import com.amazonaws.util.ClassLoaderHelper.getResourceAsStream
 import com.amazonaws.util.json.Jackson
-import java.io.InputStreamReader
-import java.net.URI
 import org.apache.http.HttpHost
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.bulk.BulkRequest
@@ -28,6 +25,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.sort.SortBuilder
 import org.elasticsearch.search.sort.SortBuilders
+import java.net.URI
 
 /**
  *
@@ -60,25 +58,31 @@ class AwsAES : RestHighLevelClient {
 
     @PublishedApi internal val mapper = Jackson.getObjectMapper()
 
-    constructor(endpoint: String, region: String, credentialsFileName: String = "/AwsCredentials.properties") :
-            this(endpoint, Regions.fromName(region.toLowerCase().replace('_', '-')), credentialsFileName)
+    constructor(endpoint: String, region: String, credentialsFileName: String) :
+            this(endpoint, null, region, credentialsFileName)
 
-    @JvmOverloads
-    constructor(endpoint: String, region: Regions = Regions.US_EAST_1, credentialsFileName: String = "/AwsCredentials.properties") : super(
+    constructor(endpoint: String, region: Regions, credentialsFileName: String) :
+            this(endpoint, region, null, credentialsFileName)
+
+    constructor(endpoint: String, region: String) :
+            this(endpoint, null, region, null)
+
+    constructor(endpoint: String, region: Regions) :
+            this(endpoint, region, null, null)
+
+    constructor(endpoint: String):
+            this(endpoint, null, null, null)
+
+    private constructor(endpoint: String, regionEnum: Regions?, regionString: String?, credentialsFileName: String?) : super(
         RestClient.builder(HttpHost(URI(endpoint).host, URI(endpoint).port, URI(endpoint).scheme))
             .setHttpClientConfigCallback {
                 it.addInterceptorLast(
-                    AWSRequestSigningApacheInterceptor(
-                        "es", AWS4Signer().apply {
+                        AwsRequestSigningApacheInterceptor(
+                                "es", AWS4Signer().apply {
                             serviceName = "es"
-                            regionName = region.getName()
-                        }, try {
-                            val properties = getResourceAsStream(credentialsFileName)
-                            AWSStaticCredentialsProvider(PropertiesCredentials(properties)).credentials
-                        } catch (e: Exception) {
-                            DefaultAWSCredentialsProviderChain().credentials
-                        }
-                    )
+                            regionName = resolveRegion(regionEnum, regionString).getName()
+                        }, resolveCredentials(credentialsFileName).credentials
+                        )
                 )
             }
     )

@@ -1,28 +1,24 @@
 package br.com.simpli.ws
 
-import br.com.simpli.tools.CoroutineProxy
 import br.com.simpli.tools.ResourceLoader
 import com.turo.pushy.apns.ApnsClient
 import com.turo.pushy.apns.ApnsClientBuilder
-import com.turo.pushy.apns.PushNotificationResponse
 import com.turo.pushy.apns.util.ApnsPayloadBuilder
 import com.turo.pushy.apns.util.SimpleApnsPushNotification
 import javapns.Push
 import javapns.communication.exceptions.CommunicationException
 import javapns.communication.exceptions.KeystoreException
 import javapns.notification.Payload
-import java.util.ArrayList
-import java.util.logging.Level
 import javapns.notification.PushNotificationPayload
 import javapns.notification.PushedNotification
-import javapns.notification.PushedNotifications
 import javapns.test.NotificationTest
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import org.apache.logging.log4j.LogManager
 import org.json.JSONException
-import java.io.File
+import java.util.*
 
 class PushIOS private constructor(val keystoreIOS: String, val senhaKeyStore: String, val production: Boolean?, private val legacy: Boolean): AutoCloseable {
 
@@ -47,6 +43,8 @@ class PushIOS private constructor(val keystoreIOS: String, val senhaKeyStore: St
     }
 
     companion object {
+        private val logger = LogManager.getLogger(PushIOS::class.java)
+
         @JvmStatic
         @Deprecated(
                 "Using javapns is deprecated",
@@ -109,11 +107,11 @@ class PushIOS private constructor(val keystoreIOS: String, val senhaKeyStore: St
             callback?.invalidTokens(erroneous, exceptions, responsePackages)
 
         } catch (ex: JSONException) {
-            java.util.logging.Logger.getLogger(PushIOS::class.java.getName()).log(Level.SEVERE, "Erro ao enviar push:" + ex.localizedMessage, ex)
+            logger.warn(ex.localizedMessage, ex)
         } catch (ex: CommunicationException) {
-            java.util.logging.Logger.getLogger(PushIOS::class.java.getName()).log(Level.SEVERE, "Erro ao enviar push:" + ex.localizedMessage, ex)
+            logger.warn( ex.localizedMessage, ex)
         } catch (ex: KeystoreException) {
-            java.util.logging.Logger.getLogger(PushIOS::class.java.getName()).log(Level.SEVERE, "Erro ao enviar push:" + ex.localizedMessage, ex)
+            logger.warn( ex.localizedMessage, ex)
         }
 
     }
@@ -142,9 +140,9 @@ class PushIOS private constructor(val keystoreIOS: String, val senhaKeyStore: St
                 NotificationTest.printPushedNotifications(pushed)
             }
         } catch (ex: CommunicationException) {
-            java.util.logging.Logger.getLogger(PushIOS::class.java.name).log(Level.SEVERE, ex.message, ex)
+            logger.warn( ex.localizedMessage, ex)
         } catch (ex: KeystoreException) {
-            java.util.logging.Logger.getLogger(PushIOS::class.java.name).log(Level.SEVERE, ex.message, ex)
+            logger.warn( ex.localizedMessage, ex)
         }
     }
 

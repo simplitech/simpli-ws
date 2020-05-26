@@ -1,19 +1,21 @@
 package br.com.simpli.ws
 
+import br.com.simpli.util.resolveRegion
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.simpleemail.model.*
 import freemarker.template.Configuration
 import freemarker.template.TemplateExceptionHandler
+import org.apache.logging.log4j.LogManager
 import java.io.StringWriter
-import java.util.logging.Level
-import java.util.logging.Logger
 
 /**
  *
  * @author ricardoprado
  */
 
-open class AWSSendEmailRequest @JvmOverloads constructor(private val region: Regions = Regions.US_WEST_2) {
+open class AwsSendEmailRequest {
+    private val region: Regions
+
     protected var from = ""
     protected var name = from
     protected var to = ""
@@ -26,6 +28,19 @@ open class AWSSendEmailRequest @JvmOverloads constructor(private val region: Reg
     protected var nameAttachment = ""
     protected var mailGroup: String? = null
     protected val tags = HashMap<String, String>()
+
+    constructor(region: Regions) :
+            this(region, null)
+
+    constructor(region: String) :
+            this(null, region)
+
+    constructor() :
+            this(null, null)
+
+    private constructor(regionEnum: Regions?, regionString: String?) {
+        this.region = resolveRegion(regionEnum, regionString)
+    }
 
 
     fun send() {
@@ -65,12 +80,13 @@ open class AWSSendEmailRequest @JvmOverloads constructor(private val region: Reg
             temp.process(model, out)
             body = out.toString()
         } catch (ex: Exception) {
-            Logger.getLogger(AWSSendEmailRequest::class.java.getName()).log(Level.SEVERE, ex.message, ex)
+            logger.warn(ex.message, ex)
         }
 
     }
 
     companion object {
+        private val logger = LogManager.getLogger(AwsSendEmailRequest::class.java)
         private var templateConfig: Configuration? = null
 
         /**

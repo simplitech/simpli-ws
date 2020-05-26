@@ -8,14 +8,12 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import java.io.IOException
-import java.lang.StringBuilder
-import java.lang.UnsupportedOperationException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
-import java.util.HashMap
+import java.util.*
 import javax.net.ssl.HttpsURLConnection
 
 /**
@@ -24,6 +22,10 @@ import javax.net.ssl.HttpsURLConnection
  */
 
 class PushAndroid private constructor(private val apiKey: String?, private val servicesJson: String, private val firebase: Boolean, private val legacy: Boolean) {
+
+    companion object {
+        private val logger = LogManager.getLogger(PushAndroid::class.java)
+    }
 
     @Deprecated("GCM is not supported anymore and FCM legacy is deprecated", ReplaceWith("PushAndroid(apiKey) or PushAndroid(apiKey, servicesJson)"))
     constructor(apiKey: String, firebase: Boolean, legacy: Boolean) : this (apiKey, "/firebase-service.json", firebase, legacy)
@@ -80,7 +82,7 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
         // New Firebase API doesn't support multiple registration IDs in the same request anymore
         // unless it's a multipart/mixed POST request with a limit of 100 tokens
         val logPayload = mapper.toJson(payload(content))
-        Logger.getLogger(PushAndroid::class.java).debug("Sending push: $logPayload")
+        logger.debug("Sending push: $logPayload")
 
         return runBlocking {
             pushTokens.map {
@@ -100,7 +102,7 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
         // New Firebase API doesn't support multiple registration IDs in the same request anymore
         // unless it's a multipart/mixed POST request with a limit of 100 tokens
         val logPayload = mapper.toJson(payload(title, text, data))
-        Logger.getLogger(PushAndroid::class.java).debug("Sending push: $logPayload")
+        logger.debug("Sending push: $logPayload")
 
         return runBlocking {
             pushTokens.map {
@@ -117,7 +119,7 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
 
     private fun sendLegacyOrGCM(content: String, url: String, pushTokens: List<String>) : BatchResponse {
         val payload = mapper.toJson(legacyPayload(content, pushTokens))
-        Logger.getLogger(PushAndroid::class.java).debug("Sending push (legacy): $payload")
+        logger.debug("Sending push (legacy): $payload")
 
         return BatchResponse(
             Response(pushTokens, post(url, payload)).apply {
@@ -220,7 +222,7 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
         }
 
         override fun log() {
-            Logger.getLogger(PushAndroid::class.java).debug(this.responseMessage)
+            logger.debug(this.responseMessage)
         }
     }
 
@@ -232,7 +234,7 @@ class PushAndroid private constructor(private val apiKey: String?, private val s
         val failedTokens = responses.filter { !it.responseCode.success() }.map { it.tokens }
 
         override fun log() {
-            Logger.getLogger(PushAndroid::class.java).debug(logMessage())
+            logger.debug(logMessage())
         }
 
         private fun logMessage(): String {

@@ -10,7 +10,7 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package br.com.simpli.ws
+package br.com.simpli.util
 
 import com.amazonaws.DefaultRequest
 import com.amazonaws.auth.AWSCredentials
@@ -39,7 +39,7 @@ import org.apache.http.protocol.HttpCoreContext.HTTP_TARGET_HOST
  * An [HttpRequestInterceptor] that signs requests using any AWS [Signer]
  * and [AWSCredentialsProvider].
  */
-internal class AWSRequestSigningApacheInterceptor
+internal class AwsRequestSigningApacheInterceptor
 /**
  *
  * @param service service that we're connecting to
