@@ -90,11 +90,20 @@ class AwsFileManager {
     }
 
     @JvmOverloads
+    @Deprecated("Renamed", replaceWith = ReplaceWith("list(folder)"))
     fun listFiles(folder: String? = null): List<String> {
+        return list(folder)
+    }
+
+    fun list(folder: String? = null): List<String> {
         return (folder?.run { client.listObjects(bucketName, this) } ?: client.listObjects(bucketName))
-                .objectSummaries
-                .filter { it.size > 0 }
-                .map { it.key }
+            .objectSummaries
+            .filter { it.size > 0 }
+            .map { it.key }
+    }
+
+    fun delete(folder: String? = null, filename: String) {
+        client.deleteObject(bucketName, getPath(folder, filename))
     }
 
     private fun getPresigned(folder: String?, filename: String, contentType: String?, httpMethod: HttpMethod): String {
