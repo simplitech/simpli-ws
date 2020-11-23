@@ -1,15 +1,11 @@
-package br.com.wowtalents.util
+package br.com.simpli.ws
 
-import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.auth.AWSStaticCredentialsProvider
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.auth.PropertiesCredentials
-import com.amazonaws.regions.DefaultAwsRegionProviderChain
+import br.com.simpli.util.resolveCredentials
+import br.com.simpli.util.resolveRegion
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder
 import com.amazonaws.services.sqs.model.Message
-import com.amazonaws.util.ClassLoaderHelper
 
 class AwsSQS {
     private val client: AmazonSQS
@@ -45,33 +41,7 @@ class AwsSQS {
 
     fun read(action: (Message) -> Unit) = client.receiveMessage(endpoint).messages.forEach(action)
 
-    fun readAndDelete(action: (Message) -> Unit) = client.receiveMessage(endpoint).messages.forEach {
-        action(it)
-        client.deleteMessage(endpoint, it.receiptHandle)
-    }
-
-    private fun resolveRegion(enum: Regions?, string: String?): Regions {
-        // Tries to resolve given Region enum first, then string, then default provider
-        return enum ?: string?.run {
-            try {
-                Regions.fromName(this.toLowerCase().replace('_', '-'))
-            } catch (e: IllegalArgumentException) {
-                null
-            }
-        } ?: Regions.fromName(DefaultAwsRegionProviderChain().region)
-    }
-
-    private fun resolveCredentials(path: String?): AWSCredentialsProvider {
-        // If path is given, tries to get from path first
-        return path?.run {
-            val pathAdjusted = if (!startsWith('/')) "/$this" else this
-
-            try {
-                val properties = ClassLoaderHelper.getResourceAsStream(pathAdjusted)
-                AWSStaticCredentialsProvider(PropertiesCredentials(properties))
-            } catch (e: Exception) {
-                null
-            }
-        } ?: DefaultAWSCredentialsProviderChain()
+    fun readAndDelete(action: (Message) -> Boolean) = client.receiveMessage(endpoint).messages.forEach {
+        if (action(it)) client.deleteMessage(endpoint, it.receiptHandle)
     }
 }
