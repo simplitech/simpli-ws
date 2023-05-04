@@ -25,9 +25,10 @@ class AwsFileManager {
 
     private val bucketName: String
     private val provider: AWSCredentialsProvider
-    private val client: AmazonS3
     private val region: Regions
     private val expireInHours: Long = 24
+    
+    val client: AmazonS3
 
     constructor(bucketName: String, region: String, credentialsFileName: String) :
             this(bucketName, null, region, credentialsFileName)
@@ -90,11 +91,25 @@ class AwsFileManager {
     }
 
     @JvmOverloads
+    fun move(folder: String? = null, filename: String, newFolder: String? = null, newFilename: String): String {
+        val path = getPath(folder, filename)
+        val newPath = getPath(newFolder, newFilename)
+
+        val endpoint = getEndpoint()
+
+        client.copyObject(bucketName, path, bucketName, newPath)
+        client.deleteObject(bucketName, path)
+
+        return "$endpoint$bucketName/$newPath"
+    }
+
+    @JvmOverloads
     @Deprecated("Renamed", replaceWith = ReplaceWith("list(folder)"))
     fun listFiles(folder: String? = null): List<String> {
         return list(folder)
     }
 
+    @JvmOverloads
     fun list(folder: String? = null): List<String> {
         return (folder?.run { client.listObjects(bucketName, this) } ?: client.listObjects(bucketName))
             .objectSummaries
@@ -102,6 +117,7 @@ class AwsFileManager {
             .map { it.key }
     }
 
+    @JvmOverloads
     fun delete(folder: String? = null, filename: String) {
         client.deleteObject(bucketName, getPath(folder, filename))
     }
